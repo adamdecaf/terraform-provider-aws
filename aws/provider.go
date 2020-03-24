@@ -733,6 +733,7 @@ func Provider() terraform.ResourceProvider {
 			"aws_ses_receipt_rule_set":                                resourceAwsSesReceiptRuleSet(),
 			"aws_ses_sending_ip_pool":                                 resourceAwsSesSendingIpPool(),
 			"aws_ses_configuration_set":                               resourceAwsSesConfigurationSet(),
+			"aws_ses_configuration_set_delivery_options":              resourceAwsSesConfigurationSetDeliveryOptions(),
 			"aws_ses_event_destination":                               resourceAwsSesEventDestination(),
 			"aws_ses_identity_notification_topic":                     resourceAwsSesNotificationTopic(),
 			"aws_ses_template":                                        resourceAwsSesTemplate(),
