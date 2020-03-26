@@ -14,6 +14,7 @@ func resourceAwsSesSendingIpPool() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceAwsSesSendingIpPoolCreate,
 		Read:   resourceAwsSesSendingIpPoolRead,
+		Update: resourceAwsSesSendingIpPoolUpdate,
 		Delete: resourceAwsSesSendingIpPoolDelete,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -23,6 +24,10 @@ func resourceAwsSesSendingIpPool() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+			},
+			"ip": {
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 		},
 	}
@@ -40,6 +45,11 @@ func resourceAwsSesSendingIpPoolCreate(d *schema.ResourceData, meta interface{})
 	}
 
 	d.SetId(poolName)
+
+	// Set other properties of the sending pool
+	if err := resourceAwsSesSendingIpPoolUpdate(d, meta); err != nil {
+		return err
+	}
 
 	return resourceAwsSesSendingIpPoolRead(d, meta)
 }
@@ -59,6 +69,24 @@ func resourceAwsSesSendingIpPoolRead(d *schema.ResourceData, meta interface{}) e
 			return nil
 		}
 	}
+	return nil
+}
+
+func resourceAwsSesSendingIpPoolUpdate(d *schema.ResourceData, meta interface{}) error {
+	conn := meta.(*AWSClient).sesv2Conn
+
+	name := d.Get("name").(string)
+
+	if v, ok := d.GetOk("ip"); ok {
+		_, err := conn.PutDedicatedIpInPool(&sesv2.PutDedicatedIpInPoolInput{
+			DestinationPoolName: aws.String(name),
+			Ip:                  aws.String(v.(string)),
+		})
+		if err != nil {
+			return fmt.Errorf("Error adding IP to pool: %v", err)
+		}
+	}
+
 	return nil
 }
 
