@@ -1,5 +1,17 @@
 ## 2.55.0 (Unreleased)
 
+BREAKING CHANGES:
+
+* provider: The configuration for the preview ignore tags functionality has been updated to include a wrapping configuration block. For example:
+
+```hcl
+provider "aws" {
+  ignore_tags {
+    keys = ["TagKey1"]
+  }
+}
+```
+
 FEATURES:
 
 * **New Resource:** `aws_ec2_availability_zone_group` [GH-12400]
