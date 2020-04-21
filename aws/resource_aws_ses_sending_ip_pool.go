@@ -69,7 +69,7 @@ func resourceAwsSesSendingIpPoolRead(d *schema.ResourceData, meta interface{}) e
 			return nil
 		}
 	}
-	return nil
+	return fmt.Errorf("unable to find %s sending pool", d.Id())
 }
 
 func resourceAwsSesSendingIpPoolUpdate(d *schema.ResourceData, meta interface{}) error {
