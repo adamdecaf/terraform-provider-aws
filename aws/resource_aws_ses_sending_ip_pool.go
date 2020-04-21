@@ -25,9 +25,12 @@ func resourceAwsSesSendingIpPool() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"ip": {
-				Type:     schema.TypeString,
+			"ips": {
+				Type:     schema.TypeList,
 				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}
@@ -77,13 +80,16 @@ func resourceAwsSesSendingIpPoolUpdate(d *schema.ResourceData, meta interface{})
 
 	name := d.Get("name").(string)
 
-	if v, ok := d.GetOk("ip"); ok {
-		_, err := conn.PutDedicatedIpInPool(&sesv2.PutDedicatedIpInPoolInput{
-			DestinationPoolName: aws.String(name),
-			Ip:                  aws.String(v.(string)),
-		})
-		if err != nil {
-			return fmt.Errorf("Error adding IP to pool: %v", err)
+	if v, ok := d.GetOk("ips"); ok {
+		ips := v.([]interface{})
+		for i := range ips {
+			_, err := conn.PutDedicatedIpInPool(&sesv2.PutDedicatedIpInPoolInput{
+				DestinationPoolName: aws.String(name),
+				Ip:                  aws.String(ips[i].(string)),
+			})
+			if err != nil {
+				return fmt.Errorf("Error adding IP to pool: %v", err)
+			}
 		}
 	}
 
