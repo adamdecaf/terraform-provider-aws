@@ -3,6 +3,7 @@ package aws
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -69,10 +70,35 @@ func resourceAwsSesSendingIpPoolRead(d *schema.ResourceData, meta interface{}) e
 	}
 	for i := range response.DedicatedIpPools {
 		if n := *response.DedicatedIpPools[i]; strings.EqualFold(n, d.Id()) {
-			return nil
+			d.Set("name", d.Id())
+
+			ips, err := readDedicatedIPs(conn, d.Id())
+			if err != nil {
+				return err
+			}
+			return d.Set("ips", ips)
 		}
 	}
 	return fmt.Errorf("unable to find %s sending pool", d.Id())
+}
+
+func readDedicatedIPs(conn *sesv2.SESV2, poolName string) ([]string, error) {
+	resp, err := conn.GetDedicatedIps(&sesv2.GetDedicatedIpsInput{
+		PageSize: aws.Int64(100),
+		PoolName: aws.String(poolName),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var out []string
+	for i := range resp.DedicatedIps {
+		if ip := resp.DedicatedIps[i]; ip != nil && ip.Ip != nil {
+			out = append(out, *ip.Ip)
+		}
+	}
+	sort.Strings(out)
+	return out, nil
 }
 
 func resourceAwsSesSendingIpPoolUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -93,7 +119,12 @@ func resourceAwsSesSendingIpPoolUpdate(d *schema.ResourceData, meta interface{})
 		}
 	}
 
-	return nil
+	// Read all IP's on the pool
+	ips, err := readDedicatedIPs(conn, d.Id())
+	if err != nil {
+		return err
+	}
+	return d.Set("ips", ips)
 }
 
 func resourceAwsSesSendingIpPoolDelete(d *schema.ResourceData, meta interface{}) error {
