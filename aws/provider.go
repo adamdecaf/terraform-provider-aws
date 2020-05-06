@@ -1066,6 +1066,7 @@ func init() {
 		"kinesis_analytics",
 		"kinesis",
 		"kinesisanalytics",
+		"kinesisanalyticsv2",
 		"kinesisvideo",
 		"kms",
 		"lakeformation",
