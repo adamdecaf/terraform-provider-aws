@@ -1121,6 +1121,7 @@ func init() {
 		"storagegateway",
 		"sts",
 		"swf",
+		"synthetics",
 		"transfer",
 		"waf",
 		"wafregional",
