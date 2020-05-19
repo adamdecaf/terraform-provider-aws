@@ -702,10 +702,7 @@ func resourceAwsKinesisAnalyticsApplicationUpdate(d *schema.ResourceData, meta i
 			CurrentApplicationVersionId: aws.Int64(int64(version)),
 		}
 
-		applicationUpdate, err := createApplicationUpdateOpts(d)
-		if err != nil {
-			return err
-		}
+		applicationUpdate := createApplicationUpdateOpts(d)
 
 		if !reflect.DeepEqual(applicationUpdate, &kinesisanalytics.ApplicationUpdate{}) {
 			updateApplicationOpts.SetApplicationUpdate(applicationUpdate)
@@ -1083,7 +1080,7 @@ func expandKinesisAnalyticsReferenceData(rd map[string]interface{}) *kinesisanal
 	return referenceData
 }
 
-func createApplicationUpdateOpts(d *schema.ResourceData) (*kinesisanalytics.ApplicationUpdate, error) {
+func createApplicationUpdateOpts(d *schema.ResourceData) *kinesisanalytics.ApplicationUpdate {
 	applicationUpdate := &kinesisanalytics.ApplicationUpdate{}
 
 	if d.HasChange("code") {
@@ -1152,7 +1149,7 @@ func createApplicationUpdateOpts(d *schema.ResourceData) (*kinesisanalytics.Appl
 		}
 	}
 
-	return applicationUpdate, nil
+	return applicationUpdate
 }
 
 func expandKinesisAnalyticsInputUpdate(vL map[string]interface{}) *kinesisanalytics.InputUpdate {
