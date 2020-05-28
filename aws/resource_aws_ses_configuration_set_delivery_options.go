@@ -3,6 +3,7 @@ package aws
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/sesv2"
@@ -60,19 +61,24 @@ func resourceAwsSesConfigurationSetDeliveryOptionsCreate(d *schema.ResourceData,
 }
 
 func resourceAwsSesConfigurationSetDeliveryOptionsRead(d *schema.ResourceData, meta interface{}) error {
-	configurationSetExists, err := findSesV2ConfigurationSet(d.Id(), nil, meta)
+	configSet, err := findSesV2ConfigurationSet(d, d.Id(), nil, meta)
 
-	if !configurationSetExists {
+	if configSet == nil {
 		log.Printf("[WARN] SES Configuration Set (%s) not found", d.Id())
 		d.SetId("")
 		return nil
 	}
-
 	if err != nil {
 		return err
 	}
 
 	d.Set("name", d.Id())
+	d.Set("configuration_set", d.Id())
+
+	if opts := configSet.DeliveryOptions; opts != nil {
+		d.Set("tls_policy", opts.TlsPolicy)
+		d.Set("sending_pool", opts.SendingPoolName)
+	}
 
 	return nil
 }
@@ -85,29 +91,30 @@ func resourceAwsSesConfigurationSetDeliveryOptionsDelete(d *schema.ResourceData,
 	return nil
 }
 
-func findSesV2ConfigurationSet(name string, token *string, meta interface{}) (bool, error) {
+func findSesV2ConfigurationSet(d *schema.ResourceData, name string, token *string, meta interface{}) (*sesv2.GetConfigurationSetOutput, error) {
 	conn := meta.(*AWSClient).sesv2Conn
-
-	configurationSetExists := false
 
 	listOpts := &sesv2.ListConfigurationSetsInput{
 		NextToken: token,
 	}
 
+	configurationSetExists := false
 	response, err := conn.ListConfigurationSets(listOpts)
 	for i := range response.ConfigurationSets {
-		if *response.ConfigurationSets[i] == name {
+		if strings.EqualFold(*response.ConfigurationSets[i], name) {
 			configurationSetExists = true
 		}
 	}
-
 	if err != nil && !configurationSetExists && response.NextToken != nil {
-		configurationSetExists, err = findSesV2ConfigurationSet(name, response.NextToken, meta)
+		return findSesV2ConfigurationSet(d, name, response.NextToken, meta)
 	}
-
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	return configurationSetExists, nil
+	configSet, err := conn.GetConfigurationSet(&sesv2.GetConfigurationSetInput{
+		ConfigurationSetName: aws.String(name),
+	})
+
+	return configSet, err
 }
